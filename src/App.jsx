@@ -1,9 +1,5 @@
 import { auth } from "./auth/firebase";
-import {
-  getAuth,
-  RecaptchaVerifier,
-  signInWithPhoneNumber,
-} from "firebase/auth";
+import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 import "./App.css";
 
 function App() {
@@ -13,27 +9,36 @@ function App() {
         "recaptcha-container",
         {
           size: "invisible",
-          callback: (response) => {},
-          "expired-callback": () => {},
+          callback: (response) => {
+            onSignUp();
+          },
+          "expired-callback": () => {
+            console.log("expired-callback err, ");
+          },
         },
         auth
       );
     }
-    console.log("passed = ", window.recaptchaVerifier);
-    // signInWithPhoneNumber(auth, +923020217792,)
-    //   .then((confirmationResult) => {
-    //     // SMS sent. Prompt user to type the code from the message, then sign the
-    //     // user in with confirmationResult.confirm(code).
-    //     window.confirmationResult = confirmationResult;
-    //     // ...
-    //     console.log("passed = ", confirmationResult);
-    //   })
-    //   .catch((error) => {
-    //     console.log("err = ", error);
-    //     // Error; SMS not sent
-    //     // ...
-    //   });
   };
+  const onSignUp = () => {
+    handleClick();
+    const appVerifier = window.recaptchaVerifier;
+    console.log("sending response", appVerifier);
+
+    signInWithPhoneNumber(auth, "+923463824121", appVerifier)
+      .then((confirmationResult) => {
+        window.confirmationResult = confirmationResult;
+        console.log("sending successful, ", confirmationResult);
+      })
+      .catch((error) => {
+        console.log("sending err, ", error);
+        window.recaptchaVerifier.render().then(function (widgetId) {
+          window.grecaptcha.reset(widgetId);
+        });
+      });
+  };
+
+  console.log("passed = ", window.recaptchaVerifier);
   return (
     <div className="App">
       <div>
@@ -41,7 +46,7 @@ function App() {
         <div id="recaptcha-container"></div>
       </div>
       <div>
-        <button onClick={() => handleClick()}>Login via Phone</button>
+        <button onClick={() => onSignUp()}>Login via Phone</button>
       </div>
     </div>
   );
